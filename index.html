@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dino Jump Game</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #f7f7f7; font-family: Arial; touch-action: none; }
+        canvas { display: block; background: #fff; border-bottom: 2px solid #555; }
+        #score { position: absolute; top: 20px; left: 20px; font-size: 20px; color: #555; }
+    </style>
+</head>
+<body>
+    <div id="score">Score: 0</div>
+    <canvas id="gameCanvas"></canvas>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreElement = document.getElementById('score');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let score = 0;
+        let gameActive = true;
+
+        let dino = { x: 50, y: canvas.height - 70, w: 40, h: 40, dy: 0, jumpForce: 12, gravity: 0.6, grounded: false };
+        let obstacles = [];
+        let frame = 0;
+
+        function spawnObstacle() {
+            let size = Math.random() * 30 + 20;
+            obstacles.push({ x: canvas.width, y: canvas.height - size - 10, w: 20, h: size, speed: 6 });
+        }
+
+        function drawDino() {
+            ctx.fillStyle = "#555";
+            ctx.fillRect(dino.x, dino.y, dino.w, dino.h);
+        }
+
+        function update() {
+            if (!gameActive) return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Dino Jump Logic
+            dino.dy += dino.gravity;
+            dino.y += dino.dy;
+
+            if (dino.y + dino.h > canvas.height - 10) {
+                dino.y = canvas.height - dino.h - 10;
+                dino.dy = 0;
+                dino.grounded = true;
+            }
+
+            drawDino();
+
+            // Obstacles Logic
+            if (frame % 80 === 0) spawnObstacle();
+            
+            obstacles.forEach((obs, index) => {
+                obs.x -= obs.speed;
+                ctx.fillStyle = "red";
+                ctx.fillRect(obs.x, obs.y, obs.w, obs.h);
+
+                // Collision Detection (တိုက်မိရင် ရှုံးမယ်)
+                if (dino.x < obs.x + obs.w && dino.x + dino.w > obs.x && dino.y < obs.y + obs.h && dino.y + dino.h > obs.y) {
+                    gameActive = false;
+                    alert("Game Over! Score: " + score);
+                    location.reload();
+                }
+
+                if (obs.x + obs.w < 0) {
+                    obstacles.splice(index, 1);
+                    score++;
+                    scoreElement.innerText = "Score: " + score;
+                }
+            });
+
+            frame++;
+            requestAnimationFrame(update);
+        }
+
+        function jump() {
+            if (dino.grounded) {
+                dino.dy = -dino.jumpForce;
+                dino.grounded = false;
+            }
+        }
+
+        // ဖုန်း screen ကို တစ်ချက်နှိပ်ရင် ခုန်မယ်
+        window.addEventListener('touchstart', jump);
+        window.addEventListener('mousedown', jump);
+
+        update();
+    </script>
+</body>
+</html>
